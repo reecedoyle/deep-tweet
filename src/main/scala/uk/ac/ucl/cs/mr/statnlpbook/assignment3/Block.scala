@@ -163,7 +163,7 @@ case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
  */
 case class Dot(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Double] {
   def forward(): Double = {
-    output = arg1.output dot arg2.output
+    output = arg1.forward() dot arg2.forward()
     output
   }
   def backward(gradient: Double): Unit = {
