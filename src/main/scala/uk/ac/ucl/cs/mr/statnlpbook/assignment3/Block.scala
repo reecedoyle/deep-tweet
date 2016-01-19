@@ -161,9 +161,15 @@ case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
  * @param arg2 right block that evaluates to a vector
  */
 case class Dot(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Double] {
-  def forward(): Double = ???
-  def backward(gradient: Double): Unit = ???
-  def update(learningRate: Double): Unit = ???
+  def forward(): Double = arg1.output dot arg2.output
+  def backward(gradient: Double): Unit = {
+    arg1.backward(arg2.output)
+    arg2.backward(arg1.output)
+  }
+  def update(learningRate: Double): Unit = {
+    arg1.update(learningRate)
+    arg2.update(learningRate)
+  }
 }
 
 /**
