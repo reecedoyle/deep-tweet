@@ -117,15 +117,13 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
    * Accumulates the gradient in gradParam
    * @param gradient an upstream gradient
    */
-  def backward(gradient: Vector): Unit = {
-    gradParam :+= gradient
-  }
+  def backward(gradient: Vector): Unit = gradParam :+= gradient
+
   /**
    * Resets gradParam to zero
    */
-  def resetGradient(): Unit = {
-    gradParam := Vector.zeros[Double](dim)
-  }
+  def resetGradient(): Unit = gradParam := Vector.zeros[Double](dim)
+
   /**
    * Updates param using the accumulated gradient. Clips the gradient to the interval (-clip, clip) before the update
    * @param learningRate learning rate used for the update
@@ -225,7 +223,7 @@ case class L2Regularization[P](strength: Double, args: Block[P]*) extends Loss {
       val in = arg.forward()
       in match {
         case v: Vector => ???
-        case w: Matrix => ???
+        case w: Matrix => w.toDenseVector
       }
     })
     output = ??? //sums the losses up
@@ -253,12 +251,18 @@ case class L2Regularization[P](strength: Double, args: Block[P]*) extends Loss {
  * @param clip defines range in which gradients are clipped, i.e., (-clip, clip)
  */
 case class MatrixParam(dim1: Int, dim2: Int, clip: Double = 10.0) extends ParamBlock[Matrix] with GaussianDefaultInitialization {
-  var param: Matrix = ???
-  val gradParam: Matrix = ???
-  def forward(): Matrix = ???
-  def backward(gradient: Matrix): Unit = ???
-  def resetGradient(): Unit = ???
-  def update(learningRate: Double): Unit = ???
+  var param: Matrix = initialize(defaultInitialization)
+  val gradParam: Matrix = Matrix.zeros[Double](dim1,dim2)
+  def forward(): Matrix = {
+    output = param
+    output
+  }
+  def backward(gradient: Matrix): Unit = gradParam :+= gradient
+  def resetGradient(): Unit = gradParam := Matrix.zeros[Double](dim1,dim2)
+  def update(learningRate: Double): Unit = {
+    param :-= (breeze.linalg.clip(gradParam, -clip, clip) * learningRate) //todo check this can be applied straight to matrices
+    resetGradient()
+  }
   def initialize(dist: () => Double): Matrix = {
     param = randMat(dim1, dim2, dist)
     param
