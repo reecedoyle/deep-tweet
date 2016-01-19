@@ -104,21 +104,28 @@ class LossSum(override val args: Loss*) extends DoubleSum(args:_*) with Loss {
  * @param clip defines range in which gradients are clipped, i.e., (-clip, clip)
  */
 case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector] with GaussianDefaultInitialization {
-  var param: Vector = ??? //todo: initialize using default initialization
-  val gradParam: Vector = ??? //todo: initialize with zeros
+  var param: Vector = Vector.fill(dim){defaultInitialization()} //todo: initialize using default initialization
+  val gradParam: Vector = Vector.zeros[Double](dim) //todo: initialize with zeros
   /**
    * @return the current value of the vector parameter and caches it into output
    */
-  def forward(): Vector = ???
+  def forward(): Vector = {
+    output = param
+    output
+  }
   /**
    * Accumulates the gradient in gradParam
    * @param gradient an upstream gradient
    */
-  def backward(gradient: Vector): Unit = ???
+  def backward(gradient: Vector): Unit = {
+    gradParam :+= gradient
+  }
   /**
    * Resets gradParam to zero
    */
-  def resetGradient(): Unit = ???
+  def resetGradient(): Unit = {
+    gradParam := Vector.zeros[Double](dim)
+  }
   /**
    * Updates param using the accumulated gradient. Clips the gradient to the interval (-clip, clip) before the update
    * @param learningRate learning rate used for the update
@@ -143,7 +150,7 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
  * @param args a sequence of blocks that evaluate to vectors
  */
 case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
-  def forward(): Vector = ???
+  def forward(): Vector = args.tail.map(v => v.output).fold(args.head.output){(u,v) => u + v}
   def backward(gradient: Vector): Unit = ???
   def update(learningRate: Double): Unit = ???
 }
