@@ -104,7 +104,7 @@ class LossSum(override val args: Loss*) extends DoubleSum(args:_*) with Loss {
  * @param clip defines range in which gradients are clipped, i.e., (-clip, clip)
  */
 case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector] with GaussianDefaultInitialization {
-  var param: Vector = Vector.fill(dim){defaultInitialization()} //todo: initialize using default initialization
+  var param: Vector = initialize(defaultInitialization) //todo: initialize using default initialization
   val gradParam: Vector = Vector.zeros[Double](dim) //todo: initialize with zeros
   /**
    * @return the current value of the vector parameter and caches it into output
@@ -150,7 +150,10 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
  * @param args a sequence of blocks that evaluate to vectors
  */
 case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
-  def forward(): Vector = args.tail.map(v => v.output).fold(args.head.output){(u,v) => u + v}
+  def forward(): Vector = {
+    output = args.tail.map(v => v.output).fold(args.head.output){(u,v) => u + v}
+    output
+  }
   def backward(gradient: Vector): Unit = args.foreach(v => v.backward(gradient))
   def update(learningRate: Double): Unit = args.foreach(v => v.update(learningRate))
 }
@@ -161,10 +164,13 @@ case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
  * @param arg2 right block that evaluates to a vector
  */
 case class Dot(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Double] {
-  def forward(): Double = arg1.output dot arg2.output
+  def forward(): Double = {
+    output = arg1.output dot arg2.output
+    output
+  }
   def backward(gradient: Double): Unit = {
-    arg1.backward(arg2.output)
-    arg2.backward(arg1.output)
+    arg1.backward(arg2.output*gradient)
+    arg2.backward(arg1.output*gradient)
   }
   def update(learningRate: Double): Unit = {
     arg1.update(learningRate)
@@ -177,9 +183,12 @@ case class Dot(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Double] {
  * @param arg a block that evaluates to a double
  */
 case class Sigmoid(arg: Block[Double]) extends Block[Double] {
-  def forward(): Double = ???
-  def backward(gradient: Double): Unit = ???
-  def update(learningRate: Double): Unit = ???
+  def forward(): Double = {
+    output = sigmoid(arg.output)
+    output
+  }
+  def backward(gradient: Double): Unit = arg.backward(gradient * sigmoid(arg.output)*(1-sigmoid(arg.output)))
+  def update(learningRate: Double): Unit = arg.update(learningRate)
 }
 
 /**
@@ -188,11 +197,17 @@ case class Sigmoid(arg: Block[Double]) extends Block[Double] {
  * @param target the target value (1.0 positive sentiment, 0.0 negative sentiment)
  */
 case class NegativeLogLikelihoodLoss(arg: Block[Double], target: Double) extends Loss {
-  def forward(): Double = ???
+  def forward(): Double = {
+    output = (target * -1) * log(arg.output) - (1-target) * log(1-arg.output)
+    output
+  }
   //loss functions are root nodes so they don't have upstream gradients
   def backward(gradient: Double): Unit = backward()
-  def backward(): Unit = ???
-  def update(learningRate: Double): Unit = ???
+  def backward(): Unit = {
+    val gradient = ((target * -1)/arg.output) + ((1-target)/(1-arg.output))
+    arg.backward(gradient)
+  }
+  def update(learningRate: Double): Unit = arg.update(learningRate)
 }
 
 /**
