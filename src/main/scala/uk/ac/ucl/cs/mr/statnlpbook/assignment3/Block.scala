@@ -151,8 +151,8 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
  */
 case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
   def forward(): Vector = args.tail.map(v => v.output).fold(args.head.output){(u,v) => u + v}
-  def backward(gradient: Vector): Unit = ???
-  def update(learningRate: Double): Unit = ???
+  def backward(gradient: Vector): Unit = args.foreach(v => v.backward(gradient))
+  def update(learningRate: Double): Unit = args.foreach(v => v.update(learningRate))
 }
 
 /**
