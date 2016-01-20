@@ -222,19 +222,22 @@ case class L2Regularization[P](strength: Double, args: Block[P]*) extends Loss {
     val losses = args.map(arg => {
       val in = arg.forward()
       in match {
-        case v: Vector => ???
-        case w: Matrix => w.toDenseVector
+        case v: Vector => 0.5 * strength * (v dot v)
+        case w: Matrix => {
+          val v = w.toDenseVector
+          0.5 * strength * (v dot v)
+        }
       }
     })
-    output = ??? //sums the losses up
+    output = losses.sum //sums the losses up
     output
   }
-  def update(learningRate: Double): Unit = ???
+  def update(learningRate: Double): Unit = args.foreach(b => b.update(learningRate))
   //loss functions are root nodes so they don't have upstream gradients
   def backward(gradient: Double): Unit = backward()
   def backward(): Unit = args.foreach(x => x.backward((x.forward() match {
-    case v: Vector => ???
-    case w: Matrix => ???
+    case v: Vector => v :*= strength
+    case w: Matrix => w.toDenseVector :*= strength
   }).asInstanceOf[P]))
 }
 
@@ -257,7 +260,7 @@ case class MatrixParam(dim1: Int, dim2: Int, clip: Double = 10.0) extends ParamB
     output = param
     output
   }
-  def backward(gradient: Matrix): Unit = gradParam :+= gradient
+  def backward(gradient: Matrix): Unit = gradParam += gradient
   def resetGradient(): Unit = gradParam := Matrix.zeros[Double](dim1,dim2)
   def update(learningRate: Double): Unit = {
     param :-= (breeze.linalg.clip(gradParam, -clip, clip) * learningRate) //todo check this can be applied straight to matrices

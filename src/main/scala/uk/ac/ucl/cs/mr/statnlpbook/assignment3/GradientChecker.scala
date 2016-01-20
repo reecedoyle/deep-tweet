@@ -76,5 +76,12 @@ object GradientChecker extends App {
   val b = VectorParam(4)
   b.set(vec(1.0, 2.0, -0.5, 2.5))
   val simpleBlock = Dot(a, b)
-  GradientChecker(simpleBlock, b)
+  val sigmoidBlock = Sigmoid(simpleBlock)
+  val c = VectorParam(4)
+  c.set(vec(2.0, 4.0, 5.5, -3.0))
+  val sumBlock = Sum(Seq(b,c))
+  val negLoss = NegativeLogLikelihoodLoss(sigmoidBlock,1.0)
+  val matBlock = MatrixParam(2,2)
+  val reg = L2Regularization(0.1,matBlock)
+  GradientChecker(reg, b)
 }
