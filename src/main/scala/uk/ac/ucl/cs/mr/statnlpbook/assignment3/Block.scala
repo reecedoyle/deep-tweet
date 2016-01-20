@@ -149,7 +149,7 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
  */
 case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
   def forward(): Vector = {
-    output = args.tail.map(v => v.output).fold(args.head.output){(u,v) => u + v}
+    output = args.tail.map(v => v.forward()).fold(args.head.forward()){(u,v) => u + v}
     output
   }
   def backward(gradient: Vector): Unit = args.foreach(v => v.backward(gradient))
@@ -182,7 +182,7 @@ case class Dot(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Double] {
  */
 case class Sigmoid(arg: Block[Double]) extends Block[Double] {
   def forward(): Double = {
-    output = sigmoid(arg.output)
+    output = sigmoid(arg.forward())
     output
   }
   def backward(gradient: Double): Unit = arg.backward(gradient * sigmoid(arg.output)*(1-sigmoid(arg.output)))
@@ -196,7 +196,7 @@ case class Sigmoid(arg: Block[Double]) extends Block[Double] {
  */
 case class NegativeLogLikelihoodLoss(arg: Block[Double], target: Double) extends Loss {
   def forward(): Double = {
-    output = (target * -1) * log(arg.output) - (1-target) * log(1-arg.output)
+    output = (target * -1) * log(arg.forward()) - (1-target) * log(1-arg.forward())
     output
   }
   //loss functions are root nodes so they don't have upstream gradients
