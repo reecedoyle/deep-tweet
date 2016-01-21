@@ -90,7 +90,7 @@ class SumOfWordVectorsModel(embeddingSize: Int, regularizationStrength: Double =
 
   def scoreSentence(sentence: Block[Vector]): Block[Double] = Sigmoid(Dot(vectorParams("param_w"), sentence))
 
-  def regularizer(words: Seq[Block[Vector]]): Loss = L2Regularization[Vector](regularizationStrength, words:_*, vectorParams("param_w"))
+  def regularizer(words: Seq[Block[Vector]]): Loss = L2Regularization[Vector](regularizationStrength, words :+ vectorParams("param_w") :_*)
 }
 
 
