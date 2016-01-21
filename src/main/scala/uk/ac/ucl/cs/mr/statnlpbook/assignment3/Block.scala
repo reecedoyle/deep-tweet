@@ -236,8 +236,8 @@ case class L2Regularization[P](strength: Double, args: Block[P]*) extends Loss {
   //loss functions are root nodes so they don't have upstream gradients
   def backward(gradient: Double): Unit = backward()
   def backward(): Unit = args.foreach(x => x.backward((x.forward() match {
-    case v: Vector => v :*= strength
-    case w: Matrix => w.toDenseVector :*= strength
+    case v: Vector => v.map(e => e * strength)
+    case w: Matrix => w.map(e => e * strength)
   }).asInstanceOf[P]))
 }
 
