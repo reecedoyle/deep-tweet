@@ -11,8 +11,11 @@ object StochasticGradientDescentLearner extends App {
       for (j <- 0 until iterations) {
         if (j % 1000 == 0) print(s"Iter $j\r")
         val (sentence, target) = SentimentAnalysisCorpus.getExample(corpus)
-        //todo: update the parameters of the model and accumulate the loss
-        ???
+        val lossBlock = model.loss(sentence,target)
+        accLoss += lossBlock.forward()
+        lossBlock.backward()
+        lossBlock.update(learningRate)
+
       }
       epochHook(i, accLoss)
     }
