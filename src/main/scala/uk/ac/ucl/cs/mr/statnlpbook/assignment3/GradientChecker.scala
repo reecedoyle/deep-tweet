@@ -81,16 +81,21 @@ object GradientChecker extends App {
   c.set(vec(2.0, 4.0, 5.5, -3.0))
   val sumBlock = Sum(Seq(b,c))
   val negLoss = NegativeLogLikelihoodLoss(sigmoidBlock,1.0)
-  GradientChecker(L2Regularization(10, b), b) // L2 reg on a vector
-  val matBlock = MatrixParam(2,2)
+  //GradientChecker(L2Regularization(10, b), b) // L2 reg on a vector
+  val matBlock = MatrixParam(4,4)
   val reg = L2Regularization(99, matBlock)
-  GradientChecker(reg, matBlock) // L2 reg on a matrix
+  //GradientChecker(reg, matBlock) // L2 reg on a matrix
 
 
   // Checking full model
   val sumVectorsModel = new SumOfWordVectorsModel(4, 0.1)
   val sumVectorsModelBlock = sumVectorsModel.scoreSentence(b)
-  GradientChecker(sumVectorsModelBlock, b)
-
+  //GradientChecker(sumVectorsModelBlock, b)
+  val mulBlock = Mul(matBlock, b)
+  println(a)
+  println(b.forward())
+  println(a:*b.output)
+  GradientChecker(Dot(mulBlock, mulBlock), matBlock)
+  GradientChecker(Dot(mulBlock, mulBlock), b)
 
 }
