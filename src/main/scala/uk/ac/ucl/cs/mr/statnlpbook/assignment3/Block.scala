@@ -278,7 +278,10 @@ case class MatrixParam(dim1: Int, dim2: Int, clip: Double = 10.0) extends ParamB
  * @param arg2 the right block evaluation to a vector
  */
 case class Mul(arg1: Block[Matrix], arg2: Block[Vector]) extends Block[Vector] {
-  def forward(): Vector = arg1.forward() * arg2.forward()
+  def forward(): Vector = {
+    output = arg1.forward() * arg2.forward()
+    output
+  }
   def backward(gradient: Vector): Unit = {
     arg1.backward(outer(gradient, arg2.output))
     arg2.backward(arg1.output * gradient)
