@@ -97,5 +97,7 @@ object GradientChecker extends App {
   println(a:*b.output)
   GradientChecker(Dot(mulBlock, mulBlock), matBlock)
   GradientChecker(Dot(mulBlock, mulBlock), b)
+  val tanhBlock = Tanh(b)
+  GradientChecker(Dot(tanhBlock,c),b)
 
 }
