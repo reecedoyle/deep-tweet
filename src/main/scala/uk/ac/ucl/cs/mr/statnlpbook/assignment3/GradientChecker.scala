@@ -89,15 +89,19 @@ object GradientChecker extends App {
 
   // Checking full model
   val sumVectorsModel = new SumOfWordVectorsModel(4, 0.1)
-  val sumVectorsModelBlock = sumVectorsModel.scoreSentence(b)
-  //GradientChecker(sumVectorsModelBlock, b)
+  val sumVectorsModelBlock = sumVectorsModel.scoreSentence(sumVectorsModel.wordVectorsToSentenceVector(Seq(sumVectorsModel.wordToVector("Reece"),sumVectorsModel.wordToVector("wins"))))
+  GradientChecker(sumVectorsModelBlock, sumVectorsModel.vectorParams("Reece"))
+  val rnnModel = new RecurrentNeuralNetworkModel(4, 6, 0.1, 0.1)
+  val rnnModelBlock = rnnModel.scoreSentence(rnnModel.wordVectorsToSentenceVector(Seq(rnnModel.wordToVector("Reece"),rnnModel.wordToVector("wins"))))
+  GradientChecker(rnnModelBlock, rnnModel.vectorParams("Reece"))
   val mulBlock = Mul(matBlock, b)
   println(a)
   println(b.forward())
   println(a:*b.output)
-  GradientChecker(Dot(mulBlock, mulBlock), matBlock)
-  GradientChecker(Dot(mulBlock, mulBlock), b)
+  //GradientChecker(Dot(mulBlock, mulBlock), matBlock)
+  //GradientChecker(Dot(mulBlock, mulBlock), b)
   val tanhBlock = Tanh(b)
-  GradientChecker(Dot(tanhBlock,c),b)
+  //GradientChecker(Dot(tanhBlock,c),b)
+
 
 }
