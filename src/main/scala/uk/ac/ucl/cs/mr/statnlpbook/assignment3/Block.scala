@@ -329,3 +329,18 @@ case class Dropout(prob: Double, arg: Block[Vector]) extends Block[Vector] {
 /**
   * ... be free, be creative :)
   */
+
+case class Concat(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Vector] {
+  def forward(): Vector = {
+    output = Vector.vertcat(arg1.forward(), arg2.forward())
+    output
+  }
+  def backward(gradient: Vector): Unit = {
+    arg1.backward(gradient(0 to arg1.output.activeSize - 1))
+    arg2.backward(gradient(arg1.output.activeSize to -1))
+  }
+  def update(learningRate: Double): Unit = {
+    arg1.update(learningRate)
+    arg2.update(learningRate)
+  }
+}

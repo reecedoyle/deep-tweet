@@ -1,6 +1,6 @@
 package uk.ac.ucl.cs.mr.statnlpbook.assignment3
 
-import breeze.linalg.{QuasiTensor, TensorLike, sum}
+import breeze.linalg.{DenseVector, QuasiTensor, TensorLike, sum}
 import breeze.numerics._
 
 /**
@@ -98,6 +98,10 @@ object GradientChecker extends App {
   println(a)
   println(b.forward())
   println(a:*b.output)
+  println(DenseVector.vertcat(a,b.output))
+  val sliceVec = a(0 to 2)
+  println(a.activeSize)
+  println(sliceVec)
   //GradientChecker(Dot(mulBlock, mulBlock), matBlock)
   //GradientChecker(Dot(mulBlock, mulBlock), b)
   val tanhBlock = Tanh(b)
