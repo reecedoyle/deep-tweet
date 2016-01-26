@@ -330,6 +330,11 @@ case class Dropout(prob: Double, arg: Block[Vector]) extends Block[Vector] {
   * ... be free, be creative :)
   */
 
+/**
+ * A block representing the vertical concatenation of two vectors
+ * @param arg1 a block evaluating to a vector
+ * @param arg2 a block evaluating to a vector
+ */
 case class Concat(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Vector] {
   def forward(): Vector = {
     output = Vector.vertcat(arg1.forward(), arg2.forward())
@@ -338,6 +343,42 @@ case class Concat(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Vector
   def backward(gradient: Vector): Unit = {
     arg1.backward(gradient(0 to arg1.output.activeSize - 1))
     arg2.backward(gradient(arg1.output.activeSize to -1))
+  }
+  def update(learningRate: Double): Unit = {
+    arg1.update(learningRate)
+    arg2.update(learningRate)
+  }
+}
+
+/**
+ * A block representing the element-wise application of the sigmoid function to a vector
+ * @param arg a block evaluating to a vector
+ */
+case class VecSig(arg: Block[Vector]) extends Block[Vector] {
+  def forward(): Vector = {
+    output = sigmoid(arg.forward())
+    output
+  }
+  def backward(gradient: Vector): Unit = {
+    val currentGrad = sigmoid(arg.output) :* (Vector.ones[Double](arg.output.activeSize)-sigmoid(arg.output))
+    arg.backward(gradient :* currentGrad)
+  }
+  def update(learningRate: Double): Unit = arg.update(learningRate)
+}
+
+/**
+ * A block representing point-wise vector multiplication
+ * @param arg1 the left block evaluating to a vector
+ * @param arg2 the right block evaluation to a vector
+ */
+case class PointMul(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Vector] {
+  def forward(): Vector = {
+    output = arg1.forward() :* arg2.forward()
+    output
+  }
+  def backward(gradient: Vector): Unit = {
+    arg1.backward(arg2.output :* gradient)
+    arg2.backward(arg1.output :* gradient)
   }
   def update(learningRate: Double): Unit = {
     arg1.update(learningRate)

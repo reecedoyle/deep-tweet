@@ -139,3 +139,56 @@ class RecurrentNeuralNetworkModel(embeddingSize: Int, hiddenSize: Int,
       L2Regularization(matrixRegularizationStrength, matrixParams("param_Wh"), matrixParams("param_Wx"))
     )
 }
+
+/**
+ * Problem 4
+ * A Long Short Term Memory Recurrent Neural Network model
+ * @param embeddingSize dimension of the word vectors used in this model
+ * @param hiddenSize dimension of the hidden state vector used in this model
+ * @param vectorRegularizationStrength strength of the regularization on the word vectors and global parameter vector w
+ * @param matrixRegularizationStrength strength of the regularization of the transition matrices used in this model
+ */
+class LSTMNetworkModel(embeddingSize: Int, hiddenSize: Int,
+                                  vectorRegularizationStrength: Double = 0.0,
+                                  matrixRegularizationStrength: Double = 0.0) extends Model {
+  override val vectorParams: mutable.HashMap[String, VectorParam] =
+    LookupTable.trainableWordVectors
+  vectorParams += "param_w" -> VectorParam(hiddenSize) // i think this is the size & we do dot of this with sentence vector for score?
+  vectorParams += "param_h0" -> VectorParam(hiddenSize)
+  vectorParams += "param_C0" -> VectorParam(hiddenSize)
+  vectorParams += "param_bf" -> VectorParam(hiddenSize)
+  vectorParams += "param_bi" -> VectorParam(hiddenSize)
+  vectorParams += "param_bc" -> VectorParam(hiddenSize)
+  vectorParams += "param_bo" -> VectorParam(hiddenSize)
+
+  override val matrixParams: mutable.HashMap[String, MatrixParam] =
+    new mutable.HashMap[String, MatrixParam]()
+  matrixParams += "param_Wf" -> MatrixParam(hiddenSize, embeddingSize+hiddenSize)
+  matrixParams += "param_Wi" -> MatrixParam(hiddenSize, embeddingSize+hiddenSize)
+  matrixParams += "param_Wc" -> MatrixParam(hiddenSize, embeddingSize+hiddenSize)
+  matrixParams += "param_Wo" -> MatrixParam(hiddenSize, embeddingSize+hiddenSize)
+
+  def wordToVector(word: String): Block[Vector] = LookupTable.addTrainableWordVector(word, embeddingSize)
+
+  def wordVectorsToSentenceVector(words: Seq[Block[Vector]]): Block[Vector] =
+    words.foldLeft[(Block[Vector],Block[Vector])]((vectorParams("param_h0"),vectorParams("param_C0"))){(h,x) =>
+      {
+        val hx = Concat(h._1, x)
+        val ft = VecSig(Sum(Seq(Mul(matrixParams("param_Wf"), hx), vectorParams("param_bf"))))
+        val it = VecSig(Sum(Seq(Mul(matrixParams("param_Wi"), hx), vectorParams("param_bi"))))
+        val Ctwiddlet = Tanh(Sum(Seq(Mul(matrixParams("param_Wc"), hx), vectorParams("param_bc"))))
+        val Ct = Sum(Seq(PointMul(ft, h._2), PointMul(it, Ctwiddlet)))
+        val ot = VecSig(Sum(Seq(Mul(matrixParams("param_Wo"), hx), vectorParams("param_bo"))))
+        val ht = PointMul(ot, Tanh(Ct))
+        (ht,Ct)
+      }
+    }._1
+
+  def scoreSentence(sentence: Block[Vector]): Block[Double] = Sigmoid(Dot(vectorParams("param_w"), sentence))
+
+  def regularizer(words: Seq[Block[Vector]]): Loss =
+    new LossSum(
+      L2Regularization(vectorRegularizationStrength, words ++ vectorParams.values.toSeq :_*),
+      L2Regularization(matrixRegularizationStrength, matrixParams.values.toSeq :_*)
+    )
+}

@@ -94,6 +94,10 @@ object GradientChecker extends App {
   val rnnModel = new RecurrentNeuralNetworkModel(4, 6, 0.1, 0.1)
   val rnnModelBlock = rnnModel.scoreSentence(rnnModel.wordVectorsToSentenceVector(Seq(rnnModel.wordToVector("Reece"),rnnModel.wordToVector("wins"))))
   GradientChecker(rnnModelBlock, rnnModel.vectorParams("Reece"))
+  val lstmModel = new LSTMNetworkModel(4, 6, 0.1, 0.1)
+  val lstmModelBlock = lstmModel.scoreSentence(lstmModel.wordVectorsToSentenceVector(Seq(lstmModel.wordToVector("Reece"),lstmModel.wordToVector("wins"))))
+  GradientChecker(lstmModelBlock, lstmModel.vectorParams("Reece"))
+  /*
   val mulBlock = Mul(matBlock, b)
   println(a)
   println(b.forward())
@@ -106,6 +110,13 @@ object GradientChecker extends App {
   //GradientChecker(Dot(mulBlock, mulBlock), b)
   val tanhBlock = Tanh(b)
   //GradientChecker(Dot(tanhBlock,c),b)
-
-
+  val sigBlock = VecSig(b)
+  GradientChecker(Dot(sigBlock,c),b)
+  //println(sigmoid(b.output))
+  val concatBlock1 = Concat(b,c)
+  val concatBlock2 = Concat(c,b)
+  GradientChecker(Dot(concatBlock1, concatBlock2), b)
+  val pointBlock = PointMul(b,c)
+  GradientChecker(Dot(pointBlock,c),c)
+*/
 }
