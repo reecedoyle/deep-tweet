@@ -192,3 +192,25 @@ class LSTMNetworkModel(embeddingSize: Int, hiddenSize: Int,
       L2Regularization(matrixRegularizationStrength, matrixParams.values.toSeq :_*)
     )
 }
+
+class SumOfWordVectorsModelWithDropout(embeddingSize: Int, regularizationStrength: Double = 0.0, prob: Double) extends Model {
+  /**
+    * We use a lookup table to keep track of the word representations
+    */
+  override val vectorParams: mutable.HashMap[String, VectorParam] =
+    LookupTable.trainableWordVectors
+  /**
+    * We are also going to need another global vector parameter
+    */
+  vectorParams += "param_w" -> VectorParam(embeddingSize)
+
+  def wordToVector(word: String): Block[Vector] = {
+    LookupTable.addTrainableWordVector(word, embeddingSize)
+  }
+
+  def wordVectorsToSentenceVector(words: Seq[Block[Vector]]): Block[Vector] = Sum(words.map(x => Dropout(prob, x)))
+
+  def scoreSentence(sentence: Block[Vector]): Block[Double] = Sigmoid(Dot(vectorParams("param_w"), sentence))
+
+  def regularizer(words: Seq[Block[Vector]]): Loss = L2Regularization[Vector](regularizationStrength, words :+ vectorParams("param_w") :_*)
+}

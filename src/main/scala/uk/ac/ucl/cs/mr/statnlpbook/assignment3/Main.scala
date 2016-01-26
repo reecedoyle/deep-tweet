@@ -11,12 +11,6 @@ object Main extends App {
    *
    * Problems 2/3/4: perform a grid search over the parameters below
    */
-  def epochHook(iter: Int, accLoss: Double): Unit = {
-//    println("Epoch %4d\tLoss %8.4f\tTrain Acc %4.2f\tDev Acc %4.2f".format(
-//      iter, accLoss, 100 * Evaluator(model, trainSetName), 100*Evaluator(model, validationSetName)))
-  }
-
-
 
   val learningRate = 0.01
   val vectorRegularizationStrength = 0.01
@@ -27,11 +21,25 @@ object Main extends App {
 
   val trainSetName = "train"
   val validationSetName = "dev"
-  var model: Model = new SumOfWordVectorsModel(wordDim, vectorRegularizationStrength)
+  //var model: Model = new SumOfWordVectorsModel(wordDim, vectorRegularizationStrength)
+  var model: Model = new SumOfWordVectorsModelWithDropout(wordDim, vectorRegularizationStrength, 0.75)
   //val model: Model = new RecurrentNeuralNetworkModel(wordDim, hiddenDim, vectorRegularizationStrength, matrixRegularizationStrength)
-  // StochasticGradientDescentLearner(model, trainSetName, 100, learningRate, epochHook)
 
-  val accuracyMatrix:mutable.HashMap[(Int,Double,Double), Double] = new mutable.HashMap[(Int,Double,Double), Double]()
+  def epochHook(iter: Int, accLoss: Double): Unit = {
+    val weights = model.vectorParams("param_w")
+    val testModel = new SumOfWordVectorsModel(wordDim, vectorRegularizationStrength)
+    testModel.vectorParams ++= model.vectorParams
+    testModel.vectorParams += "param_w" -> weights
+    model.vectorParams += "param_w" -> weights
+    println("Epoch %4d\tLoss %8.4f\tTrain Acc %4.2f\tDev Acc %4.2f".format(
+      iter, accLoss, 100 * Evaluator(model, trainSetName), 100*Evaluator(testModel, validationSetName)))
+  }
+
+
+  StochasticGradientDescentLearner(model, trainSetName, 100, learningRate, epochHook)
+
+
+ /*val accuracyMatrix:mutable.HashMap[(Int,Double,Double), Double] = new mutable.HashMap[(Int,Double,Double), Double]()
 
   val range = List(0.005,0.01, 0.05)
 
@@ -49,7 +57,7 @@ object Main extends App {
     }
     println(i)
   }
-  println(accuracyMatrix.maxBy(_._2))
+  println(accuracyMatrix.maxBy(_._2))*/
 
   //println(accuracyMatrix)
 
