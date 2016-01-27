@@ -27,7 +27,7 @@ object Main extends App {
 
   val trainSetName = "train"
   val validationSetName = "dev"
-  //var model: Model = new SumOfWordVectorsModel(wordDim, vectorRegularizationStrength)
+   //var model: Model = new SumOfWordVectorsModel(wordDim, vectorRegularizationStrength)
   var model: Model = new RecurrentNeuralNetworkModel(wordDim, hiddenDim, vectorRegularizationStrength, matrixRegularizationStrength)
 
   val accuracyMatrix:mutable.HashMap[(Int,Int,Double,Double,Double), Double] = new mutable.HashMap[(Int,Int,Double,Double,Double), Double]()
