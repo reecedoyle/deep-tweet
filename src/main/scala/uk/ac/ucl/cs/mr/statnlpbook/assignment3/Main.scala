@@ -27,10 +27,37 @@ object Main extends App {
 
   val trainSetName = "train"
   val validationSetName = "dev"
-  var model: Model = new SumOfWordVectorsModel(wordDim, vectorRegularizationStrength)
-  //val model: Model = new RecurrentNeuralNetworkModel(wordDim, hiddenDim, vectorRegularizationStrength, matrixRegularizationStrength)
-  // StochasticGradientDescentLearner(model, trainSetName, 100, learningRate, epochHook)
+  //var model: Model = new SumOfWordVectorsModel(wordDim, vectorRegularizationStrength)
+  var model: Model = new RecurrentNeuralNetworkModel(wordDim, hiddenDim, vectorRegularizationStrength, matrixRegularizationStrength)
 
+  val accuracyMatrix:mutable.HashMap[(Int,Int,Double,Double,Double), Double] = new mutable.HashMap[(Int,Int,Double,Double,Double), Double]()
+
+  val range = List(0.005,0.01, 0.05)
+
+  for (i <- 7 to 10 by 1) {
+    for (j <- 7 to 10 by 1) {
+      for (k <- range) {
+        for (l <- range) {
+          model = new RecurrentNeuralNetworkModel(i, j, k, l)
+          for (m <- range) {
+            StochasticGradientDescentLearner(model, trainSetName, 50, m, epochHook)
+            accuracyMatrix += (i, j, k, l,m) -> 100 * Evaluator(model, validationSetName)
+            model.vectorParams.clear()
+            model.vectorParams += "param_w" -> VectorParam(i)
+          }
+        }
+      }
+      println(i)
+    }
+  }
+  println(accuracyMatrix.maxBy(_._2))
+
+  println(accuracyMatrix)
+
+
+
+
+  /*  RELEVANT TO SUM OF WORDS GRID SEARCH
   val accuracyMatrix:mutable.HashMap[(Int,Double,Double), Double] = new mutable.HashMap[(Int,Double,Double), Double]()
 
   val range = List(0.005,0.01, 0.05)
@@ -53,7 +80,7 @@ object Main extends App {
 
   //println(accuracyMatrix)
 
-
+*/
 
 
 
