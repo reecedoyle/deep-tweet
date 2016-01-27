@@ -1,6 +1,10 @@
 package uk.ac.ucl.cs.mr.statnlpbook.assignment3
 
-import breeze.numerics.{log, sigmoid, tanh} //yes, you will need them ;)
+import breeze.numerics.{log, sigmoid, tanh}
+
+import scala.util.Random
+
+//yes, you will need them ;)
 import breeze.linalg.{DenseMatrix => Matrix, DenseVector => Vector}
 
 /**
@@ -9,6 +13,7 @@ import breeze.linalg.{DenseMatrix => Matrix, DenseVector => Vector}
 
 /**
  * A trait for the core building **block** of our computation graphs
+ *
  * @tparam T the type parameter this block evaluates to (can be Double, Vector, Matrix)
  */
 trait Block[T] {
@@ -54,6 +59,7 @@ trait GaussianDefaultInitialization extends DefaultInitialization {
 
 /**
  * A simple block that represents a constant double value
+ *
  * @param arg the constant double value
  */
 case class DoubleConstant(arg: Double) extends Block[Double] with Loss {
@@ -66,6 +72,7 @@ case class DoubleConstant(arg: Double) extends Block[Double] with Loss {
 
 /**
  * A simple block that represents a constant vector
+ *
  * @param arg the constant vector
  */
 case class VectorConstant(arg: Vector) extends Block[Vector] {
@@ -77,6 +84,7 @@ case class VectorConstant(arg: Vector) extends Block[Vector] {
 
 /**
  * A block representing a sum of doubles
+ *
  * @param args a sequence of blocks that evaluate to doubles
  */
 case class DoubleSum(args: Block[Double]*) extends Block[Double] {
@@ -100,6 +108,7 @@ class LossSum(override val args: Loss*) extends DoubleSum(args:_*) with Loss {
 
 /**
  * A block representing a vector parameter
+ *
  * @param dim dimension of the vector
  * @param clip defines range in which gradients are clipped, i.e., (-clip, clip)
  */
@@ -115,6 +124,7 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
   }
   /**
    * Accumulates the gradient in gradParam
+ *
    * @param gradient an upstream gradient
    */
   def backward(gradient: Vector): Unit = gradParam :+= gradient
@@ -126,6 +136,7 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
 
   /**
    * Updates param using the accumulated gradient. Clips the gradient to the interval (-clip, clip) before the update
+ *
    * @param learningRate learning rate used for the update
    */
   def update(learningRate: Double): Unit = {
@@ -134,6 +145,7 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
   }
   /**
    * Initializes the parameter randomly using a sampling function
+ *
    * @param dist sampling function
    * @return the random parameter vector
    */
@@ -145,6 +157,7 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
 
 /**
  * A block representing the sum of vectors
+ *
  * @param args a sequence of blocks that evaluate to vectors
  */
 case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
@@ -158,6 +171,7 @@ case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
 
 /**
  * A block representing the dot product between two vectors
+ *
  * @param arg1 left block that evaluates to a vector
  * @param arg2 right block that evaluates to a vector
  */
@@ -178,6 +192,7 @@ case class Dot(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Double] {
 
 /**
  * A block representing the sigmoid of a scalar value
+ *
  * @param arg a block that evaluates to a double
  */
 case class Sigmoid(arg: Block[Double]) extends Block[Double] {
@@ -191,6 +206,7 @@ case class Sigmoid(arg: Block[Double]) extends Block[Double] {
 
 /**
  * A block representing the negative log-likelihood loss
+ *
  * @param arg a block evaluating to a scalar value
  * @param target the target value (1.0 positive sentiment, 0.0 negative sentiment)
  */
@@ -210,6 +226,7 @@ case class NegativeLogLikelihoodLoss(arg: Block[Double], target: Double) extends
 
 /**
  * A block representing the l2 regularization of a vector or matrix
+ *
  * @param strength the strength of the regularization (often denoted as lambda)
  * @param args a block evaluating to a vector or matrix
  * @tparam P type of the input block (we assume this is Block[Vector] or Block[Matrix]
@@ -249,6 +266,7 @@ case class L2Regularization[P](strength: Double, args: Block[P]*) extends Loss {
 
 /**
  * A block representing a matrix parameter
+ *
  * @param dim1 first dimension of the matrix
  * @param dim2 second dimension of the matrix
  * @param clip defines range in which gradients are clipped, i.e., (-clip, clip)
@@ -274,6 +292,7 @@ case class MatrixParam(dim1: Int, dim2: Int, clip: Double = 10.0) extends ParamB
 
 /**
  * A block representing matrix-vector multiplication
+ *
  * @param arg1 the left block evaluating to a matrix
  * @param arg2 the right block evaluation to a vector
  */
@@ -294,6 +313,7 @@ case class Mul(arg1: Block[Matrix], arg2: Block[Vector]) extends Block[Vector] {
 
 /**
  * A block rerpesenting the element-wise application of the tanh function to a vector
+ *
  * @param arg a block evaluating to a vector
  */
 case class Tanh(arg: Block[Vector]) extends Block[Vector] {
@@ -317,13 +337,46 @@ case class Tanh(arg: Block[Vector]) extends Block[Vector] {
 
 /**
  * A potentially useful block for training a better model (https://en.wikipedia.org/wiki/Dropout_(neural_networks))
+ *
  * @param prob dropout probability
  * @param arg a block evaluating to a vector whose components we want to drop
  */
 case class Dropout(prob: Double, arg: Block[Vector]) extends Block[Vector] {
-  def forward(): Vector = ???
-  def update(learningRate: Double): Unit = ???
-  def backward(gradient: Vector): Unit = ???
+  var randnum = Random.nextDouble()
+  val drop = {
+    if (randnum > prob) {
+      1
+    } else {
+      0
+    }
+  }
+  //Store a boolean that says whether I passed forward or not
+  //Act like a door
+  //If prob is greater than randnum, then set components to zero, otherwise continue as normal.
+  def forward(): Vector = {
+    if (drop == 1) {
+      output = Vector.zeros(arg.forward().activeSize)
+    } else {
+      output = arg.forward()
+    }
+    output
+  }
+
+  def update(learningRate: Double): Unit = {
+    randnum = Random.nextDouble()
+  }
+
+  def backward(gradient: Vector): Unit = {
+    if (drop != 1) {
+      arg.backward(gradient)
+    }
+  }
+  //Store in a variable
+
+  /* wrap around every vector
+     if probability is higher than a certain number, then return zero vector (works for
+   */
+
 }
 
 /**
@@ -332,6 +385,7 @@ case class Dropout(prob: Double, arg: Block[Vector]) extends Block[Vector] {
 
 /**
  * A block representing the vertical concatenation of two vectors
+ *
  * @param arg1 a block evaluating to a vector
  * @param arg2 a block evaluating to a vector
  */
@@ -352,6 +406,7 @@ case class Concat(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Vector
 
 /**
  * A block representing the element-wise application of the sigmoid function to a vector
+ *
  * @param arg a block evaluating to a vector
  */
 case class VecSig(arg: Block[Vector]) extends Block[Vector] {
@@ -368,6 +423,7 @@ case class VecSig(arg: Block[Vector]) extends Block[Vector] {
 
 /**
  * A block representing point-wise vector multiplication
+ *
  * @param arg1 the left block evaluating to a vector
  * @param arg2 the right block evaluation to a vector
  */
