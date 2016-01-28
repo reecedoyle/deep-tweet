@@ -398,7 +398,7 @@ case class Product(args: Seq[Block[Vector]]) extends Block[Vector] {
   def backward(gradient: Vector): Unit = {
     args.foreach(v => {
       val forward = v.forward()
-      val temp = gradient :* args.tail.map(v => v.forward()).fold(args.head.forward()){(u,v) => u :* v} :/ forward
+      val temp = gradient :* output :/ forward
       v.backward(temp)
     })
   }
