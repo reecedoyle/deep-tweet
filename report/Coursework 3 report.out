@@ -1,0 +1,18 @@
+\BOOKMARK [1][-]{section.1}{Gradient Checking}{}% 1
+\BOOKMARK [1][-]{section.2}{Sum-of-Word-Vectors Model}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Blocks}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Model}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.3}{Grid Search and Evaluation}{section.2}% 5
+\BOOKMARK [2][-]{subsection.2.4}{Loss Analysis}{section.2}% 6
+\BOOKMARK [2][-]{subsection.2.5}{t-SNE Visualisation}{section.2}% 7
+\BOOKMARK [1][-]{section.3}{Recurrent Neural Networks}{}% 8
+\BOOKMARK [2][-]{subsection.3.1}{Blocks}{section.3}% 9
+\BOOKMARK [2][-]{subsection.3.2}{Model}{section.3}% 10
+\BOOKMARK [2][-]{subsection.3.3}{Grid Search, Initialisation, Evaluation and Comparison}{section.3}% 11
+\BOOKMARK [1][-]{section.4}{Sky's the Limit}{}% 12
+\BOOKMARK [2][-]{subsection.4.1}{Dropout regularisation}{section.4}% 13
+\BOOKMARK [2][-]{subsection.4.2}{Multiplication-of-Word-Vectors Model}{section.4}% 14
+\BOOKMARK [2][-]{subsection.4.3}{Long Short-Term Memory RNN \(LSTM\)}{section.4}% 15
+\BOOKMARK [3][-]{subsubsection.4.3.1}{Blocks}{subsection.4.3}% 16
+\BOOKMARK [3][-]{subsubsection.4.3.2}{Model}{subsection.4.3}% 17
+\BOOKMARK [2][-]{subsection.4.4}{Loading pre-trained word2vec vectors}{section.4}% 18

@@ -82,6 +82,22 @@ class SumOfWordVectorsModel(embeddingSize: Int, regularizationStrength: Double =
    */
   vectorParams += "param_w" -> VectorParam(embeddingSize)
 
+  // Load in word2vec representations from training set
+  val bufferedSource = io.Source.fromFile("vecs.txt")
+  val lines = bufferedSource.getLines().drop(1)
+  for (line <- lines) {
+    println("Considering line: " + line)
+    val splitLine = line.split(" ")
+    val word = splitLine(0)
+    if (word != "") {
+      println("First word: " + word)
+      val vectorised = vec(splitLine.tail.map(e => e.toDouble):_*)
+      var entry = VectorParam(embeddingSize)
+      entry.param = vectorised
+      vectorParams += word -> entry
+    }
+  }
+
   def wordToVector(word: String): Block[Vector] = {
     LookupTable.addTrainableWordVector(word, embeddingSize)
   }
