@@ -341,7 +341,7 @@ case class Tanh(arg: Block[Vector]) extends Block[Vector] {
  * @param prob dropout probability
  * @param arg a block evaluating to a vector whose components we want to drop
  */
-case class Dropout(prob: Double, arg: Block[Vector]) extends Block[Vector] {
+case class DropoutSum(prob: Double, arg: Block[Vector]) extends Block[Vector] {
   var randnum = Random.nextDouble()
   val drop = {
     if (randnum > prob) {
@@ -382,6 +382,30 @@ case class Dropout(prob: Double, arg: Block[Vector]) extends Block[Vector] {
 /**
   * ... be free, be creative :)
   */
+
+/**
+  * A block representing the product of vectors
+  *
+  * @param args a sequence of blocks that evaluate to vectors
+  */
+case class Product(args: Seq[Block[Vector]]) extends Block[Vector] {
+  def forward(): Vector = {
+    output = args.tail.map(v => v.forward()).fold(args.head.forward()){(u,v) => u :* v}
+    output
+  }
+
+  //Pass product of every vector except the current arg
+  def backward(gradient: Vector): Unit = {
+    args.foreach(v => {
+      val forward = v.forward()
+      val temp = gradient :* args.tail.map(v => v.forward()).fold(args.head.forward()){(u,v) => u :* v} :/ forward
+      v.backward(temp)
+    })
+  }
+  def update(learningRate: Double): Unit = args.foreach(v => v.update(learningRate))
+}
+
+
 
 /**
  * A block representing the vertical concatenation of two vectors
