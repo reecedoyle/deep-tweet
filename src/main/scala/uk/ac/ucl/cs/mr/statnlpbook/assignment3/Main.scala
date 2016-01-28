@@ -87,6 +87,11 @@ object Main extends App {
       println(accuracyMatrix)
     }
   }
+  finally
+  {
+    println(accuracyMatrix.maxBy(_._2))
+    println(accuracyMatrix)
+  }
 
 
 
