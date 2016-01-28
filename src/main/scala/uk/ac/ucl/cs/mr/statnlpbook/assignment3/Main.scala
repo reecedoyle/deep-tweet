@@ -1,5 +1,6 @@
 package uk.ac.ucl.cs.mr.statnlpbook.assignment3
 
+import breeze.numerics.exp
 import breeze.stats.distributions.Uniform
 
 import scala.collection.mutable
@@ -56,18 +57,18 @@ object Main extends App {
   */
   val embeddingDist = new Uniform(6,11) // embedding size distribution
   val hiddenDist = new Uniform(6,11) // hidden size distribution
-  val vectorRegDist = new Uniform(0.005,0.5) // vector regularisation strength distribution
-  val matrixRegDist = new Uniform(0.005,0.5) // matrix regularisation strength distribution
-  val learningRateDist = new Uniform(-4,0) // learning rate distribution
+  val vectorRegDist = new Uniform(-2,0) // vector regularisation strength distribution
+  val matrixRegDist = new Uniform(-2,0) // matrix regularisation strength distribution
+  val learningRateDist = new Uniform(-4,-1) // learning rate distribution
   var bestConfig = (0.0,0.0,0.0,0.0,0.0,0.0)
 
   try {
     while (true) {
       val i = embeddingDist.sample().floor.toInt
       val j = hiddenDist.sample().floor.toInt
-      val k = vectorRegDist.sample()
-      val l = matrixRegDist.sample()
-      val m = math.exp(matrixRegDist.sample())
+      val k = 0.5 * exp(vectorRegDist.sample())
+      val l = 0.5 * exp(matrixRegDist.sample())
+      val m = exp(matrixRegDist.sample())
       model = new RecurrentNeuralNetworkModel(i, j, k, l)
       print("Current: " + (i,j,k,l,m))
       StochasticGradientDescentLearner(model, trainSetName, 50, m, epochHook)
@@ -76,6 +77,8 @@ object Main extends App {
       if (accuracy > bestConfig._6)
         bestConfig = (i,j,k,l,m,accuracy)
       println("Current: " + (i,j,k,l,m,accuracy) + ", Best: " + bestConfig)
+      model.vectorParams.clear()
+      model.matrixParams.clear()
     }
   }
   catch{
