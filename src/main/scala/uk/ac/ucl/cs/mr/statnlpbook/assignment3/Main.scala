@@ -1,5 +1,7 @@
 package uk.ac.ucl.cs.mr.statnlpbook.assignment3
 
+import breeze.stats.distributions.Uniform
+
 import scala.collection.mutable
 
 /**
@@ -33,26 +35,37 @@ object Main extends App {
   val accuracyMatrix:mutable.HashMap[(Int,Int,Double,Double,Double), Double] = new mutable.HashMap[(Int,Int,Double,Double,Double), Double]()
 
   val range = List(0.005,0.01, 0.05)
+  val embeddingDist = new Uniform(6,11) // embedding size distribution
+  val hiddenDist = new Uniform(6,11) // hidden size distribution
+  val vectorRegDist = new Uniform(0.005,0.5) // vector regularisation strength distribution
+  val matrixRegDist = new Uniform(0.005,0.5) // matrix regularisation strength distribution
+  val learningRateDist = new Uniform(-4,0) // learning rate distribution
+  var bestConfig = (0.0,0.0,0.0,0.0,0.0,0.0)
 
-  for (i <- 7 to 10 by 1) {
-    for (j <- 7 to 10 by 1) {
-      for (k <- range) {
-        for (l <- range) {
-          model = new RecurrentNeuralNetworkModel(i, j, k, l)
-          for (m <- range) {
-            StochasticGradientDescentLearner(model, trainSetName, 50, m, epochHook)
-            accuracyMatrix += (i, j, k, l,m) -> 100 * Evaluator(model, validationSetName)
-            model.vectorParams.clear()
-            model.vectorParams += "param_w" -> VectorParam(i)
-          }
-        }
-      }
-      println(i)
+  try {
+    while (true) {
+      val i = embeddingDist.sample().floor.toInt
+      val j = hiddenDist.sample().floor.toInt
+      val k = vectorRegDist.sample()
+      val l = matrixRegDist.sample()
+      val m = math.exp(matrixRegDist.sample())
+      model = new RecurrentNeuralNetworkModel(i, j, k, l)
+      print("Current: " + (i,j,k,l,m))
+      StochasticGradientDescentLearner(model, trainSetName, 50, m, epochHook)
+      val accuracy = 100.0 * Evaluator(model, validationSetName)
+      accuracyMatrix += (i, j, k, l, m) -> accuracy
+      if (accuracy > bestConfig._6)
+        bestConfig = (i,j,k,l,m,accuracy)
+      println("Current: " + (i,j,k,l,m,accuracy) + ", Best: " + bestConfig)
     }
   }
-  println(accuracyMatrix.maxBy(_._2))
+  catch{
+    case e:Exception => {
+      println(accuracyMatrix.maxBy(_._2))
+      println(accuracyMatrix)
+    }
+  }
 
-  println(accuracyMatrix)
 
 
 

@@ -11,7 +11,7 @@ object StochasticGradientDescentLearner extends App {
     for (i <- 0 until maxEpochs) {
       var accLoss = 0.0
       for (j <- 0 until iterations) {
-        if (j % 1000 == 0) print(s"Iter $j\r")
+        if (j % 1000 == 0) print(s"Epoch: $i/$maxEpochs, Iteration: $j/$iterations\r")
         val (sentence, target) = SentimentAnalysisCorpus.getExample(corpus)
         val lossBlock = model.loss(sentence,target)
         accLoss += lossBlock.forward()
@@ -21,5 +21,6 @@ object StochasticGradientDescentLearner extends App {
       }
       epochHook(i, accLoss)
     }
+    println()
   }
 }
