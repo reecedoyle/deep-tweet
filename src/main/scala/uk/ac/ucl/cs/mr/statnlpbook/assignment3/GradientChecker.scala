@@ -88,9 +88,15 @@ object GradientChecker extends App {
 
 
   // Checking full model
+  val sumVectorsModelWithDropout = new SumOfWordVectorsModelWithDropout(4, 0.1, 0.6)
+  val sumVectorsModelBlockWithDropout = sumVectorsModelWithDropout.scoreSentence(sumVectorsModelWithDropout.wordVectorsToSentenceVector(Seq(sumVectorsModelWithDropout.wordToVector("Reece"),sumVectorsModelWithDropout.wordToVector("wins"))))
+  GradientChecker(sumVectorsModelBlockWithDropout, sumVectorsModelWithDropout.vectorParams("Reece"))
   val sumVectorsModel = new SumOfWordVectorsModel(4, 0.1)
   val sumVectorsModelBlock = sumVectorsModel.scoreSentence(sumVectorsModel.wordVectorsToSentenceVector(Seq(sumVectorsModel.wordToVector("Reece"),sumVectorsModel.wordToVector("wins"))))
   GradientChecker(sumVectorsModelBlock, sumVectorsModel.vectorParams("Reece"))
+  val productVectorsModel = new ProductOfWordVectorsModel(4, 0.1)
+  val productVectorsModelBlock = productVectorsModel.scoreSentence(productVectorsModel.wordVectorsToSentenceVector(Seq(productVectorsModel.wordToVector("Reece"),productVectorsModel.wordToVector("wins"))))
+  GradientChecker(productVectorsModelBlock, productVectorsModel.vectorParams("Reece"))
   val rnnModel = new RecurrentNeuralNetworkModel(4, 6, 0.1, 0.1)
   val rnnModelBlock = rnnModel.scoreSentence(rnnModel.wordVectorsToSentenceVector(Seq(rnnModel.wordToVector("Reece"),rnnModel.wordToVector("wins"))))
   GradientChecker(rnnModelBlock, rnnModel.vectorParams("Reece"))
