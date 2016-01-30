@@ -397,8 +397,7 @@ case class Product(args: Seq[Block[Vector]]) extends Block[Vector] {
   //Pass product of every vector except the current arg
   def backward(gradient: Vector): Unit = {
     args.foreach(v => {
-      val forward = v.forward()
-      val temp = gradient :* output :/ forward
+      val temp = gradient :* (output :/ v.output)
       v.backward(temp)
     })
   }

@@ -85,6 +85,8 @@ object GradientChecker extends App {
   val matBlock = MatrixParam(4,4)
   val reg = L2Regularization(99, matBlock)
   //GradientChecker(reg, matBlock) // L2 reg on a matrix
+  val prodBlock = Product(Seq(b,c))
+  GradientChecker(Dot(prodBlock,c),b)
 
 
   // Checking full model
