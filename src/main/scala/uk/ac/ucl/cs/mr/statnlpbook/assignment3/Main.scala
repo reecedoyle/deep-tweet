@@ -1,6 +1,5 @@
 package uk.ac.ucl.cs.mr.statnlpbook.assignment3
 
-import breeze.numerics.exp
 import breeze.stats.distributions.Uniform
 
 import scala.collection.mutable
@@ -31,7 +30,7 @@ object Main extends App {
   val trainSetName = "train"
   val validationSetName = "dev"
    //var model: Model = new SumOfWordVectorsModel(wordDim, vectorRegularizationStrength)
-  var model: Model = new RecurrentNeuralNetworkModel(wordDim, hiddenDim, vectorRegularizationStrength, matrixRegularizationStrength)
+  //var model: Model = new RecurrentNeuralNetworkModel(wordDim, hiddenDim, vectorRegularizationStrength, matrixRegularizationStrength)
 
   val accuracyMatrix:mutable.HashMap[(Int,Int,Double,Double,Double), Double] = new mutable.HashMap[(Int,Int,Double,Double,Double), Double]()
 /* CODE FOR NON-RANDOM GRID SEARCH
@@ -55,28 +54,30 @@ object Main extends App {
   println(accuracyMatrix.maxBy(_._2))
   println(accuracyMatrix)
   */
-  val embeddingDist = new Uniform(6,11) // embedding size distribution
-  val hiddenDist = new Uniform(6,11) // hidden size distribution
-  val vectorRegDist = new Uniform(-2,0) // vector regularisation strength distribution
-  val matrixRegDist = new Uniform(-2,0) // matrix regularisation strength distribution
-  val learningRateDist = new Uniform(-4,-1) // learning rate distribution
+  val embeddingDist = new Uniform(4,11) // embedding size distribution
+  val hiddenDist = new Uniform(6,13) // hidden size distribution
+  val vectorRegDist = new Uniform(-5,-3) // vector regularisation strength distribution
+  val matrixRegDist = new Uniform(-5,-3) // matrix regularisation strength distribution
+  val learningRateDist = new Uniform(-5,-3) // learning rate distribution
   var bestConfig = (0.0,0.0,0.0,0.0,0.0,0.0)
 
   try {
     while (true) {
       val i = embeddingDist.sample().floor.toInt
       val j = hiddenDist.sample().floor.toInt
-      val k = 0.5 * exp(vectorRegDist.sample())
-      val l = 0.5 * exp(matrixRegDist.sample())
-      val m = exp(matrixRegDist.sample())
-      model = new RecurrentNeuralNetworkModel(i, j, k, l)
-      print("Current: " + (i,j,k,l,m))
-      StochasticGradientDescentLearner(model, trainSetName, 50, m, epochHook)
+      val k = /*0.0001*/math.pow(10.0,vectorRegDist.sample())
+      val l = /*0.0001*/math.pow(10.0,matrixRegDist.sample())
+      val m = 0.002//math.pow(10.0,learningRateDist.sample())
+      val model = new RecurrentNeuralNetworkModel(i, j, k, l)
+      println("Current: " + (i,j,k,l,m))
+      StochasticGradientDescentLearner(model, trainSetName, 20, m, epochHook)
       val accuracy = 100.0 * Evaluator(model, validationSetName)
+      val trainAccuracy = 100.0 * Evaluator(model, trainSetName)
       accuracyMatrix += (i, j, k, l, m) -> accuracy
       if (accuracy > bestConfig._6)
         bestConfig = (i,j,k,l,m,accuracy)
       println("Current: " + (i,j,k,l,m,accuracy) + ", Best: " + bestConfig)
+      println("Train set accuracy: " + trainAccuracy)
       model.vectorParams.clear()
       model.matrixParams.clear()
     }
