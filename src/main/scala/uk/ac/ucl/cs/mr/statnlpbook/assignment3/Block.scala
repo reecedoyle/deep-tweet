@@ -57,6 +57,8 @@ trait GaussianDefaultInitialization extends DefaultInitialization {
   def defaultInitialization(): Double = random.nextGaussian() * 0.1
 }
 
+//trait
+
 /**
  * A simple block that represents a constant double value
  *
@@ -253,7 +255,7 @@ case class L2Regularization[P](strength: Double, args: Block[P]*) extends Loss {
   //loss functions are root nodes so they don't have upstream gradients
   def backward(gradient: Double): Unit = backward()
   def backward(): Unit = args.foreach(x => x.backward((x.forward() match {
-    case v: Vector => v.map(e => e * strength); //v(2) = 1;
+    case v: Vector => v.map(e => e * strength)
     case w: Matrix => w.map(e => e * strength)
   }).asInstanceOf[P]))
 }
@@ -350,9 +352,8 @@ case class DropoutSum(prob: Double, arg: Block[Vector]) extends Block[Vector] {
       0
     }
   }
-  //Store a boolean that says whether I passed forward or not
-  //Act like a door
-  //If prob is greater than randnum, then set components to zero, otherwise continue as normal.
+  // Store a boolean that says whether I passed forward or not - act like a door
+  // If prob is greater than randnum, then set components to zero, otherwise continue as normal
   def forward(): Vector = {
     if (drop == 1) {
       output = Vector.zeros(arg.forward().activeSize)
@@ -371,17 +372,7 @@ case class DropoutSum(prob: Double, arg: Block[Vector]) extends Block[Vector] {
       arg.backward(gradient)
     }
   }
-  //Store in a variable
-
-  /* wrap around every vector
-     if probability is higher than a certain number, then return zero vector (works for
-   */
-
 }
-
-/**
-  * ... be free, be creative :)
-  */
 
 /**
   * A block representing the product of vectors

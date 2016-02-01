@@ -24,12 +24,16 @@ object Main extends App {
 
   val trainSetName = "train"
   val validationSetName = "dev"
-  //var model: Model = new SumOfWordVectorsModel(wordDim, vectorRegularizationStrength)
+//  var model: Model = new SumOfWordVectorsModel(wordDim, vectorRegularizationStrength)
   //var model: Model = new SumOfWordVectorsModelWithDropout(wordDim, vectorRegularizationStrength, probability)
-  var model: Model = new ProductOfWordVectorsModel(wordDim, vectorRegularizationStrength)
+//  var model: Model = new SumOfWordVectorsModelWithTrainedVectors(9, vectorRegularizationStrength)
+  //var model: Model = new ProductOfWordVectorsModel(wordDim, vectorRegularizationStrength)
   //val model: Model = new RecurrentNeuralNetworkModel(wordDim, hiddenDim, vectorRegularizationStrength, matrixRegularizationStrength)
 
+
   def epochHook(iter: Int, accLoss: Double): Unit = {
+    // The commented code below is needed for to calculate the accuracy on the training and development set for the
+    // Dropout model
     /*val weights = model.vectorParams("param_w")
     val adjustedWeights = weights.copy()
     adjustedWeights.param :* probability
@@ -42,61 +46,85 @@ object Main extends App {
   }
 
 
-  StochasticGradientDescentLearner(model, trainSetName, 10, learningRate, epochHook)
+//  StochasticGradientDescentLearner(model, trainSetName, 10, learningRate, epochHook)
 
-  /*var model: Model = new SumOfWordVectorsModelWithDropout(wordDim, vectorRegularizationStrength, probability)
 
-  val accuracyMatrix:mutable.HashMap[(Int,Double,Double), Double] = new mutable.HashMap[(Int,Double,Double), Double]()
+  // Hyoer-parameter searching
 
-  val range = List(0.005,0.01, 0.05)
-  //val range = List(0.005)
-  for (i <- 7 to 10 by 1){
-    for (j <- range)
-    {
-      model = new SumOfWordVectorsModelWithDropout(i, j, probability)
-      for (k <- range)
-      {
-        StochasticGradientDescentLearner(model, trainSetName, 50, k, epochHook)
+  // Uncomment first for SumOfWordVectors____ models, second for RNN and LSTM
+//  val accuracyMatrix:mutable.HashMap[(Int,Double,Double), Double] = new mutable.HashMap[(Int,Double,Double), Double]()
+  val accuracyMatrix:mutable.HashMap[(Int, Int, Double, Double, Double), Double] =
+    new mutable.HashMap[(Int, Int, Double, Double,Double), Double]()
 
-        val weights = model.vectorParams("param_w")
-        weights.param :* probability
-        val testModel = new SumOfWordVectorsModel(i, j)
-        testModel.vectorParams ++= model.vectorParams
-        testModel.vectorParams += "param_w" -> weights
+//  val range = List(0.005,0.01, 0.05)
+//  for (i <- 7 to 10 by 1){
+//    for (j <- range)
+//    {
+//      model = new SumOfWordVectorsModel(i, j)
+//      for (k <- range)
+//      {
+//        StochasticGradientDescentLearner(model, trainSetName, 50, k, epochHook)
+//        accuracyMatrix += (i,j,k) -> 100*Evaluator(model,validationSetName)
+//        model.vectorParams.clear()
+//        model.vectorParams += "param_w" -> VectorParam(i)
+//      }
+//    }
+//    println(i)
+//  }
+//  println(accuracyMatrix.maxBy(_._2))
+//
+//  println(accuracyMatrix)
 
-        accuracyMatrix += (i,j,k) -> 100*Evaluator(model,validationSetName)
-        model.vectorParams.clear()
-        model.vectorParams += "param_w" -> VectorParam(i)
-      }
-    }
-    println(i)
-  }
-  println(accuracyMatrix.maxBy(_._2))
+  // CODE FOR GRID SEARCH ON SUM OF WORDS WITH DROPOUT MODEL
+//  val range = List(0.005,0.01, 0.05)
+//  for (i <- 7 to 10 by 1){
+//    for (j <- range)
+//    {
+//      model = new SumOfWordVectorsModelWithDropout(i, j, probability)
+//      for (k <- range)
+//      {
+//        StochasticGradientDescentLearner(model, trainSetName, 50, k, epochHook)
+//
+//        val weights = model.vectorParams("param_w")
+//        weights.param :* probability
+//        val testModel = new SumOfWordVectorsModel(i, j)
+//        testModel.vectorParams ++= model.vectorParams
+//        testModel.vectorParams += "param_w" -> weights
+//
+//        accuracyMatrix += (i,j,k) -> 100*Evaluator(model,validationSetName)
+//        model.vectorParams.clear()
+//        model.vectorParams += "param_w" -> VectorParam(i)
+//      }
+//    }
+//    println(i)
+//  }
+//  println(accuracyMatrix.maxBy(_._2))
+//
+//  println(accuracyMatrix)
 
-  println(accuracyMatrix)*/
+//   CODE FOR GRID SEARCH FOR RNN/LSTM
+//    val range = List(0.005,0.01, 0.05)
+//    for (i <- 7 to 10 by 1) {
+//      for (j <- 7 to 10 by 1) {
+//        for (k <- range) {
+//          for (l <- range) {
+//            model = new RecurrentNeuralNetworkModel(i, j, k, l)
+//            for (m <- range) {
+//              StochasticGradientDescentLearner(model, trainSetName, 50, m, epochHook)
+//              accuracyMatrix += (i, j, k, l, m) -> 100 * Evaluator(model, validationSetName)
+//              model.vectorParams.clear()
+//              model.vectorParams += "param_w" -> VectorParam(i)
+//            }
+//          }
+//        }
+//        println(i)
+//      }
+//    }
+//    println(accuracyMatrix.maxBy(_._2))
+//    println(accuracyMatrix)
 
-  /* CODE FOR NON-RANDOM GRID SEARCH
-    val range = List(0.005,0.01, 0.05)
-    for (i <- 7 to 10 by 1) {
-      for (j <- 7 to 10 by 1) {
-        for (k <- range) {
-          for (l <- range) {
-            model = new RecurrentNeuralNetworkModel(i, j, k, l)
-            for (m <- range) {
-              StochasticGradientDescentLearner(model, trainSetName, 50, m, epochHook)
-              accuracyMatrix += (i, j, k, l, m) -> 100 * Evaluator(model, validationSetName)
-              model.vectorParams.clear()
-              model.vectorParams += "param_w" -> VectorParam(i)
-            }
-          }
-        }
-        println(i)
-      }
-    }
-    println(accuracyMatrix.maxBy(_._2))
-    println(accuracyMatrix)
-    */
-  /* RANDOM GRID SEARCH CODE FOR RNN/LSTM
+
+//  RANDOM GRID SEARCH CODE FOR RNN/LSTM
   val embeddingDist = new Uniform(4,11) // embedding size distribution
   val hiddenDist = new Uniform(6,13) // hidden size distribution
   val vectorRegDist = new Uniform(-5,-3) // vector regularisation strength distribution
@@ -111,7 +139,7 @@ object Main extends App {
       val k = /*0.0001*/math.pow(10.0,vectorRegDist.sample())
       val l = /*0.0001*/math.pow(10.0,matrixRegDist.sample())
       val m = 0.002//math.pow(10.0,learningRateDist.sample())
-      val model = new RecurrentNeuralNetworkModel(i, j, k, l)
+//      val model = new RecurrentNeuralNetworkModel(i, j, k, l)
       println("Current: " + (i,j,k,l,m))
       StochasticGradientDescentLearner(model, trainSetName, 20, m, epochHook)
       val accuracy = 100.0 * Evaluator(model, validationSetName)
@@ -125,14 +153,12 @@ object Main extends App {
       model.matrixParams.clear()
     }
   }
-  catch{
-    case e:Exception => {
-      println(accuracyMatrix.maxBy(_._2))
-      println(accuracyMatrix)
-    }
-  }
-  */
-
+//  catch{
+//    case e:Exception => {
+//      println(accuracyMatrix.maxBy(_._2))
+//      println(accuracyMatrix)
+//    }
+//  }
 
 
 
@@ -147,4 +173,6 @@ object Main extends App {
     println(s"$paramName:\n${paramBlock.param}\n")
   }
   */
+
+
 }

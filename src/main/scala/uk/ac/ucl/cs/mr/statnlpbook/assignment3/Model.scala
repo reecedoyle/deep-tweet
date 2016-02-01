@@ -62,7 +62,27 @@ trait Model {
    * @return a block representing the regularization loss on the parameters of the model
    */
   def regularizer(words: Seq[Block[Vector]]): Loss
+
+  def loadVectorRepresentation(path: String): mutable.HashMap[String, VectorConstant] = {
+    val fixedParams = new mutable.HashMap[String, VectorConstant]()
+    val bufferedSource = io.Source.fromFile("vecs.txt")
+      val lines = bufferedSource.getLines().drop(1)
+      for (line <- lines) {
+        val splitLine = line.split(" ")
+        val word = splitLine(0)
+        if (word != "") {
+          val vectorised = vec(splitLine.tail.map(e => e.toDouble):_*)
+          val entry = VectorConstant(vectorised)
+          fixedParams += word -> entry
+        }
+      }
+    fixedParams
+  }
 }
+
+
+// Load the vector representations obtained from word2vec as a map. Input is a text file with a word and its
+// vector representation seperated by spaces on each line
 
 
 /**
@@ -77,29 +97,68 @@ class SumOfWordVectorsModel(embeddingSize: Int, regularizationStrength: Double =
    */
   override val vectorParams: mutable.HashMap[String, VectorParam] =
     LookupTable.trainableWordVectors
+
   /**
    * We are also going to need another global vector parameter
    */
   vectorParams += "param_w" -> VectorParam(embeddingSize)
 
-  // Load in word2vec representations from training set
-  val bufferedSource = io.Source.fromFile("vecs.txt")
-  val lines = bufferedSource.getLines().drop(1)
-  for (line <- lines) {
-    println("Considering line: " + line)
-    val splitLine = line.split(" ")
-    val word = splitLine(0)
-    if (word != "") {
-      println("First word: " + word)
-      val vectorised = vec(splitLine.tail.map(e => e.toDouble):_*)
-      var entry = VectorParam(embeddingSize)
-      entry.param = vectorised
-      vectorParams += word -> entry
-    }
-  }
-
   def wordToVector(word: String): Block[Vector] = {
     LookupTable.addTrainableWordVector(word, embeddingSize)
+  }
+
+  def wordVectorsToSentenceVector(words: Seq[Block[Vector]]): Block[Vector] = Sum(words)
+
+  def scoreSentence(sentence: Block[Vector]): Block[Double] = Sigmoid(Dot(vectorParams("param_w"), sentence))
+
+  def regularizer(words: Seq[Block[Vector]]): Loss = L2Regularization[Vector](regularizationStrength, words :+ vectorParams("param_w") :_*)
+}
+
+class SumOfWordVectorsModelWithTrainedVectors(embeddingSize: Int, regularizationStrength: Double = 0.0) extends Model {
+  /**
+   * We use a lookup table to keep track of the word representations
+   */
+  override val vectorParams: mutable.HashMap[String, VectorParam] =
+    LookupTable.trainableWordVectors
+
+
+    var fixedParams = LookupTable.fixedWordVectors //: mutable.HashMap[String, VectorConstant] = LookupTable.fixedWordVectors
+  //  val fixedParams = new mutable.HashMap[String, VectorConstant]()
+
+    fixedParams = loadVectorRepresentation("vecs.txt")
+
+  /**
+   * We are also going to need another global vector parameter
+   */
+  vectorParams += "param_w" -> VectorParam(embeddingSize)
+
+
+
+  // Load in word2vec representations from training set
+  //  val bufferedSource = io.Source.fromFile("vecs.txt")
+  //  val lines = bufferedSource.getLines().drop(1)
+  //  for (line <- lines) {
+  ////    println("Considering line: " + line)
+  //    val splitLine = line.split(" ")
+  //    val word = splitLine(0)
+  //    if (word != "") {
+  ////      println("First word: " + word)
+  //      val vectorised = vec(splitLine.tail.map(e => e.toDouble):_*)
+  //      val entry = VectorConstant(vectorised)
+  ////      val entry = VectorParam(embeddingSize)
+  ////      entry.param = vectorised
+  //      LookupTable.addFixedWordVector(word, vectorised)
+  ////      fixedParams += word -> entry
+  //    }
+  //  }
+
+  // word2vec addition: if we've seen the word at training time, take its vector representation from fixedParams,
+  // else take it from vectorParams
+  def wordToVector(word: String): Block[Vector] = {
+    if (fixedParams.contains(word)) {
+      return fixedParams.get(word).get
+    }
+    else return LookupTable.addTrainableWordVector(word, embeddingSize)
   }
 
   def wordVectorsToSentenceVector(words: Seq[Block[Vector]]): Block[Vector] = Sum(words)

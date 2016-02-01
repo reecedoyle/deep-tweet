@@ -53,13 +53,13 @@ Consider that we instead use backpropogation but use the formula for approximati
 
 \item Dot product
 
-\[ \frac{\partial {\mathbf{x} \cdot \mathbf{y}}}{\partial{\mathbf{x}}} = \mathbf{y}  \]
+\[ z \frac{\partial {\mathbf{x} \cdot \mathbf{y}}}{\partial{\mathbf{x}}} = z \mathbf{y}  \]
 
-\[ \frac{\partial {\mathbf{x} \cdot \mathbf{y}}}{\partial{\mathbf{y}}} = \mathbf{x} \]
+\[ z \frac{\partial {\mathbf{x} \cdot \mathbf{y}}}{\partial{\mathbf{y}}} = z \mathbf{x} \]
 
 \item Sigmoid
 
-\[ \frac{\partial \text{sigmoid} (x)}{\partial{x}} =  \text{sigmoid}(x) (1 - \text{sigmoid}(x))\]
+\[z \frac{\partial \text{sigmoid} (x)}{\partial{x}} =  \text{sigmoid}(x) (1 - \text{sigmoid}(x)) z\]
 
 \item Negative log-likelihood
 
@@ -135,7 +135,7 @@ Word vector dimension & Vector regularisation strength & Learning rate & Error o
 \label{mainresults}
 \end{tabular}
 }
-\caption{Hyperparameter search results}
+\caption{Grid search on Sum of Words model}
 \end{table}
 
 Our best parameters for the sum of word vectors model were:
@@ -203,7 +203,9 @@ We round the values of the predictions to get a binary classification. Blue data
 
 \item tanh
 
-\[ \frac{\partial \text{tanh}(\mathbf{x})}{\partial \mathbf{x}} = 1 - \text{tanh}^2(x) \]
+Note that $x$ refers to a single element in the vector $\mathbf{x}$. The element wise application of $\text{tanh}$ would apply this function to each element of $\mathbf{x}$.
+
+\[ \frac{\partial \text{tanh}(x)}{\partial x} = 1 - \text{tanh}^2(x) \]
 
 \end{enumerate}
 

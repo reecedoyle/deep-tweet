@@ -72,21 +72,37 @@ object GradientChecker extends App {
     * A very silly block to test if gradient checking is working.
     * Will only work if the implementation of the Dot block is already correct
     */
+
+  // Checking blocks
   val a = vec(-1.5, 1.0, 1.5, 0.5)
   val b = VectorParam(4)
   b.set(vec(1.0, 2.0, -0.5, 2.5))
-  val simpleBlock = Dot(a, b)
-  val sigmoidBlock = Sigmoid(simpleBlock)
+  val dotBlock = Dot(a, b)
+  GradientChecker(dotBlock, b)
+  val sigmoidBlock = Sigmoid(dotBlock)
   val c = VectorParam(4)
   c.set(vec(2.0, 4.0, 5.5, -3.0))
   val sumBlock = Sum(Seq(b,c))
   val negLoss = NegativeLogLikelihoodLoss(sigmoidBlock,1.0)
-  //GradientChecker(L2Regularization(10, b), b) // L2 reg on a vector
-  val matBlock = MatrixParam(4,4)
-  val reg = L2Regularization(99, matBlock)
-  //GradientChecker(reg, matBlock) // L2 reg on a matrix
-  val prodBlock = Product(Seq(b,c))
-  GradientChecker(Dot(prodBlock,c),b)
+//  GradientChecker(L2Regularization(10, b), c) // L2 regularisation on a vector
+  val matrixBlock = MatrixParam(4,4)
+  val regularizationBlock = L2Regularization(99, matrixBlock)
+  GradientChecker(regularizationBlock, matrixBlock) // L2 reg on a matrix
+  val productBlock = Product(Seq(b,c))
+  GradientChecker(Dot(productBlock,c),b)
+  val mulBlock = Mul(matrixBlock, b)
+  GradientChecker(Dot(mulBlock, mulBlock), matrixBlock)
+  GradientChecker(Dot(mulBlock, mulBlock), b)
+  val tanhBlock = Tanh(b)
+  GradientChecker(Dot(tanhBlock,c),b)
+  val sigBlock = VecSig(b)
+  GradientChecker(Dot(sigBlock,c),b)
+  //println(sigmoid(b.output))
+  val concatBlock1 = Concat(b,c)
+  val concatBlock2 = Concat(c,b)
+  GradientChecker(Dot(concatBlock1, concatBlock2), b)
+  val pointBlock = PointMul(b,c)
+  GradientChecker(Dot(pointBlock,c),c)
 
 
   // Checking full model
@@ -94,7 +110,7 @@ object GradientChecker extends App {
   val sumVectorsModelBlockWithDropout = sumVectorsModelWithDropout.scoreSentence(sumVectorsModelWithDropout.wordVectorsToSentenceVector(Seq(sumVectorsModelWithDropout.wordToVector("Reece"),sumVectorsModelWithDropout.wordToVector("wins"))))
   GradientChecker(sumVectorsModelBlockWithDropout, sumVectorsModelWithDropout.vectorParams("Reece"))
   val sumVectorsModel = new SumOfWordVectorsModel(4, 0.1)
-  val sumVectorsModelBlock = sumVectorsModel.scoreSentence(sumVectorsModel.wordVectorsToSentenceVector(Seq(sumVectorsModel.wordToVector("Reece"),sumVectorsModel.wordToVector("wins"))))
+  val sumVectorsModelBlock = sumVectorsModel.scoreSentence(sumVectorsModel.wordVectorsToSentenceVector(Seq(sumVectorsModel.wordToVector("Reece"), sumVectorsModel.wordToVector("wins"))))
   GradientChecker(sumVectorsModelBlock, sumVectorsModel.vectorParams("Reece"))
   val productVectorsModel = new ProductOfWordVectorsModel(4, 0.1)
   val productVectorsModelBlock = productVectorsModel.scoreSentence(productVectorsModel.wordVectorsToSentenceVector(Seq(productVectorsModel.wordToVector("Reece"),productVectorsModel.wordToVector("wins"))))
@@ -105,26 +121,4 @@ object GradientChecker extends App {
   val lstmModel = new LSTMNetworkModel(4, 6, 0.1, 0.1)
   val lstmModelBlock = lstmModel.scoreSentence(lstmModel.wordVectorsToSentenceVector(Seq(lstmModel.wordToVector("Reece"),lstmModel.wordToVector("wins"))))
   GradientChecker(lstmModelBlock, lstmModel.vectorParams("Reece"))
-  /*
-  val mulBlock = Mul(matBlock, b)
-  println(a)
-  println(b.forward())
-  println(a:*b.output)
-  println(DenseVector.vertcat(a,b.output))
-  val sliceVec = a(0 to 2)
-  println(a.activeSize)
-  println(sliceVec)
-  //GradientChecker(Dot(mulBlock, mulBlock), matBlock)
-  //GradientChecker(Dot(mulBlock, mulBlock), b)
-  val tanhBlock = Tanh(b)
-  //GradientChecker(Dot(tanhBlock,c),b)
-  val sigBlock = VecSig(b)
-  GradientChecker(Dot(sigBlock,c),b)
-  //println(sigmoid(b.output))
-  val concatBlock1 = Concat(b,c)
-  val concatBlock2 = Concat(c,b)
-  GradientChecker(Dot(concatBlock1, concatBlock2), b)
-  val pointBlock = PointMul(b,c)
-  GradientChecker(Dot(pointBlock,c),c)
-*/
 }
