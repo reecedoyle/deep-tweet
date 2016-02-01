@@ -156,8 +156,7 @@ From the results we observed that the model was very sensitive to the learning r
 
 \subsection{Loss Analysis}
 
-To help analyse the performance of the model on a per epoch basis, the figure below shows the training loss over epochs. As expected, the training loss decreased between epochs but this rate of change was not linear and appears to plateau during the higher epochs. 
-After 300 epochs, the training loss was $25600$.
+To help analyse the performance of the model on a per epoch basis, the figure below shows the training loss over epochs. As expected, the training loss decreased between epochs but this rate of change was not linear and appears to plateau during the higher epochs. This is due to the nature of how gradient descent works. As the algorithm reaches closer to the optimum, the rate at which convergence occurs decreases. This can be observed by the diminishing rate of decrease of the training loss over epochs. After 300 epochs, the training loss was $25600$.
 
 \begin{figure}[H]
 \centering
@@ -229,6 +228,11 @@ Due to the computational complexity of the RNN model, running extensive grid sea
 
 These choices of parameters for this model gave a development set accuracy of $76.76\%$.
 
+
+After establishing the best parameters, we decided to vary the method of initialising the matrix parameters using a uniform and gaussian distribution. We found on average that the parameters initialised on the gaussian distribution gave higher development set accuracies. After 10 epochs, matrix parameters initialised with a gaussian distribution had a development accuracy of $69\%$ while using a uniform distribution yielded only $59\%$. We attribute this difference to the idea that if weights were initialised to values that were too small, then the signal value as it passes through layers becomes too small to be useful and conversely if too big, the signal value becomes too large as it passes through layers. Although, ideally, repeated runs of a larger scale experiment would prove this result more conclusive.
+
+Comparing performance on both models, we found that the sum of words model performed better. The development set scores for these models were quite similar and although both model ran for the same number of epochs, the tuning methodology for the sum of words model was more extensive. It possible that given a larger time frame (for both computation and experimentation) that the RNN model should perform better.
+
 \section{Sky's the Limit}
 
 \subsection{Dropout regularisation}
@@ -245,7 +249,7 @@ During testing time, the weights from the dropout model are copied into a normal
 
 This model was implemented by judging the score of a sentence by taking the element-wise product of the outputs produced by the nodes as opposed to summing them as performed by the sum-of-word-vectors model. 
 
-Upon comparison of the two models, it appeared that the sum model performed more effectively than the multiplicative model over a period of 10 epochs and 100 epochs. The accuracy on the development set provided by the multiplication model was $59.25\%$, lower than what we achieved for sum-of-word-vectors.
+Upon comparison of the two models, it appeared that the sum model performed more effectively than the multiplicative model over a period of 10 epochs and 100 epochs. The accuracy on the development set provided by the multiplication model was $59.25\%$, lower than what we achieved for sum-of-word-vectors. We predict this is due to the element wise multiplication. If a word embedding has a $0$ at any position, this effectively 
 
 \subsection{Long Short-Term Memory RNN (LSTM)}
 
@@ -299,7 +303,6 @@ In the second approach, the embeddings were trainable. Here we thought that alth
 
 Further work could be done with this approach by using a larger corpus to train word2vec to help minimise the issue of unseen words. 
 
-\bibliography{references}{}
-\bibliographystyle{plain}
+In summary, we found our best model to be the SumOfVectors model with dropout regularisation as this achieved the best accuracy on the development set. Therefore, this is the model we used to classify the test data set.
 
 \end{document}
