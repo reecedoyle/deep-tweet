@@ -59,10 +59,10 @@ object SentimentAnalysisCorpus {
       debug(debugCounter)
     case "test" =>
       if (testCounter == test.length - 1) {
-        test = random.shuffle(test)
+//        test = random.shuffle(test)
         testCounter = -1
       }
       testCounter = testCounter + 1
-      test(debugCounter)
+      test(testCounter)
   }
 }

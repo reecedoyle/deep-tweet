@@ -41,9 +41,11 @@ Oliver Tun \\
 \maketitle
 
 \section{Gradient Checking}
-Using the approximation instead of backpropagation means we lose intermediate derivatives resulting in recalculating derivatives and wasting computation.
+By using backpropagation, we are calculating gradients for blocks and then reusing them as intermediate results in the gradient calculations for other blocks; this saves on a substantial amount of computation time. If we were to use the gradient approximation for each block with respect to the loss function, we would not be making this computational saving.
 
-Consider that we instead use backpropogation but use the formula for approximating the gradient as opposed to the calculated derivative. The derivative of the model is calculated at every block comprising it, and each of these blocks will introduce an error. Calculating the model's gradient multiplies these gradients together (as in chain rule), thus potentially introducing errors significant enough to change the classification. 
+Suppose we combine these two approaches and use the gradient approximation formula for calculating the gradient of each block with respect to the upstream block, and then use backpropagation to calculate the derivation of each block with respect to the loss function. Calculating the gradient for a model would involve multiplying many of these estimated gradients together, each of which has a slight error, potentially resulting in the introduction of errors significant enough to change the classification.
+
+One such deviation of the approximated gradient from that calculated through backpropagation is $1.2714735930785537 \times 10^{-8}$ for the Dot block.
 
 \section{Sum-of-Word-Vectors Model}
 
@@ -163,15 +165,13 @@ After 300 epochs, the training loss was $25600$.
 \caption{Training loss over epochs.}
 \end{figure}
 
-Plotting the change in training and development accuracies over epochs yields the figure below.
-
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.75\textwidth]{graphics/tdloss.jpg}
 \caption{Training and development accuracy over epochs.}
 \end{figure}
 
-Having observed the change in training loss, it is no surprise that the training set accuracy continuously increases over epochs until the plateau close to $100\%$. The change of the development set accuracy is not immediately obvious due to the fluctuations. It can be seen that after the initial increase in development accuracy, it quickly plateaus and then gradually decreases. The figure below demonstrates this. From this decrease in development accuracy and the large variance between the training and development accuracies, we can conclude that the model suffers from overfitting.
+Having observed the change in training loss, it is no surprise that the training set accuracy continuously increases over epochs until the plateau close to $100\%$ (see Figure 1). The accuracy on both sets is shown in Figure 2, the change of the development set accuracy is not immediately obvious due to the fluctuations. It can be seen that after the initial increase in development accuracy, it quickly plateaus and then gradually decreases. The figure below demonstrates this. From this decrease in development accuracy and the large variance between the training and development accuracies, we can conclude that the model suffers from overfitting.
 
 \begin{figure}[H]
 \centering
@@ -181,7 +181,7 @@ Having observed the change in training loss, it is no surprise that the training
 
 \subsection{t-SNE Visualisation}
 
-We round the values of the predictions to get a binary classification. Blue data points represent a positive classification and orange is negative.
+We round the values of the predictions to get a binary classification. Blue data points represent a positive classification and orange is negative. Due to the run time of the t-SNE program, we sample 10000 data points.
 
 \begin{figure}[H]
 \centering
@@ -214,6 +214,20 @@ Note that $x$ refers to a single element in the vector $\mathbf{x}$. The element
 We get an error of $6.301 \times 10^{-11}$ for the RNN model.
 
 \subsection{Grid Search, Initialisation, Evaluation and Comparison}
+
+Due to the computational complexity of the RNN model, running extensive grid searches for tuning the hyper parameters was not as practical when compared to the sum of words model. We explored 2 variants of early stopping when training but eventually chose to stick with running each selection of hyperparameters for 50 epochs, in order to compare performance against the sum of words model. The first variant we experimented with was where training would stop when the development accuracy decreased between epochs while the second variant only checked for this condition every 5 epochs. Due to the fluctuations in development accuracy, it was determined that this would perhaps not have been the most optimal way to tune the parameters and that a static number of epochs was more indicative. Given the time constraints, we implemented a random search instead. Our best parameters for the RNN model were:
+
+\begin{itemize}
+
+\item Word vector dimension: $8$
+\item Hidden dimension: $7$
+\item Vector regularisation strength: $7.786 \times 10^-5$
+\item Matrix regularisation strength: $9.741 \times 10^-5$
+\item Learning rate: $0.001$
+
+\end{itemize}
+
+These choices of parameters for this model gave a development set accuracy of $76.76\%$.
 
 \section{Sky's the Limit}
 
@@ -271,13 +285,19 @@ I really don't, and I'm not just saying this because it's a great example and I 
 
 In this example, it is useful to remember that \emph{don't} occurred before \emph{like} when conducting sentiment analysis. The LSTM uses an additional cell state to which it can write information about the word vectors and hidden weights to help form these dependencies.
 
+Unfortunately, we found that the computational cost of running the LSTM model too high to complete training. However, we expect it to perform better.
+
 \subsection{Loading pre-trained word2vec vectors}
 
-When we encounter a word for the first time, we generate its vector representation as a set of random values. wor2vec is a tool that is able to create representative word embeddings given a corpus. Our intuition is that representative embeddings will cause our model to converge to the optimum development accuracy faster since it would not need as many epochs to learn word embeddings as compared to a random embedding. word2vec has several models that can achieve this result, but we decided to use the skip-gram model.
+When we encounter a word for the first time, we generate its vector representation as a set of random values. wor2vec is a tool that is able to create representative word embeddings given a corpus. We approached two different methods of using these embeddings. In both approaches our intuition is that representative embeddings will cause our model to converge to the optimum development accuracy faster since it would not need as many epochs to learn word embeddings as compared to a random embedding (due to starting off in a better position on the error surface).
 
 To use word2vec, we used a Python interface over the original C library to pass in our training data and generate a CSV file with words and their vector representations. We read this file into our model's lookup table.
 
-Using word2vec on our sum-of-word-vectors model resulted in almost the same results. 
+In the first approach we treated the embeddings as constant by storing them in the fixed hash map and changing the \texttt{wordToVector} function to first see if it has a representation in the fixed hash map before adding a new trainable vector to the trainable hash map. This is based on the assumption that close vectors as defined by word2vec would share similar sentiment.
+
+In the second approach, the embeddings were trainable. Here we thought that although similar words may have similar sentiment, they only serve as a good initial guess since word2vec cares about similarity in meaning primarily (by looking at the context in which words are used) and not sentiment. This performed better than the first approach, achieving $75.77\%$ accuracy on the development set over 100 epochs.
+
+Further work could be done with this approach by using a larger corpus to train word2vec to help minimise the issue of unseen words. 
 
 \bibliography{references}{}
 \bibliographystyle{plain}
